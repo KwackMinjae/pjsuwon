@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hair3D 테스트 업로드</title>
+</head>
+<body>
+  <h1>사진 업로드 테스트</h1>
+
+  <!-- 업로드 폼 -->
+  <form id="uploadForm">
+    <input type="file" name="file" id="fileInput" accept="image/*" required />
+    <button type="submit">업로드</button>
+  </form>
+
+  <p id="status"></p>
+  <div id="result"></div>
+
+  <script>
+    const uploadForm = document.getElementById("uploadForm");
+    const statusText = document.getElementById("status");
+    const resultDiv = document.getElementById("result");
+
+    uploadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return;
+
+      statusText.innerText = "업로드 중...";
+
+      // 1) 업로드 API 호출
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("http://127.0.0.1:5000/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      const jobId = uploadData.job_id;
+
+      statusText.innerText = `작업 등록됨 (job_id=${jobId}), 처리 중...`;
+
+      // 2) 일정 간격으로 상태 확인
+      const interval = setInterval(async () => {
+        const res = await fetch(`http://127.0.0.1:5000/api/jobs/${jobId}`);
+        const data = await res.json();
+
+        if (data.status === "DONE") {
+          clearInterval(interval);
+          statusText.innerText = "완료!";
+          resultDiv.innerHTML = `<img src="http://127.0.0.1:5000${data.result_url}" width="300" />`;
+        } else if (data.status === "FAILED") {
+          clearInterval(interval);
+          statusText.innerText = "처리 실패: " + data.error;
+        }
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
