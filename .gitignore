@@ -1,0 +1,21 @@
+# 환경 변수 파일
+.env
+
+# 파이썬 캐시
+__pycache__/
+*.pyc
+
+# 백업 및 임시 파일
+*.bak
+*.bak2
+*.broken
+
+# 모델, 출력, 업로드 파일
+uploads/
+outputs/
+*.glb
+
+# 테스트 이미지
+*.png
+*.jpg
+*.jpeg
