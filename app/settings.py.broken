@@ -1,0 +1,38 @@
+from pydantic_settings import BaseSettings
+from pydantic import Field
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent  # .../hairfusion-service/app -> /hairfusion-service
+
+class Settings(BaseSettings):
+    hairfusion_base_url: str = Field(default="http://127.0.0.1:8100", alias="HAIRFUSION_BASE_URL")
+    # ?�일 기본 URL
+    ailab_base_url: str = Field(
+        default="https://www.ailabapi.com/api/portrait/effects/hairstyle-changer-pro",
+        alias="AILAB_BASE_URL"
+    )
+    # API ??    ailab_api_key: str = Field(default="", alias="AILAB_API_KEY")
+
+    # ?�청 ?�?�아??    request_timeout: int = Field(default=180, alias="REQUEST_TIMEOUT")
+
+    class Config:
+        env_file = str(ROOT / ".env")
+        extra = "ignore"
+
+    @property
+    def effective_ailab_urls(self) -> list[str]:
+        """기본 URL??바리?�이?�과 ?�께 ?�보군으�??�장"""
+        base = (self.ailab_base_url or "").rstrip("/")
+        if not base:
+            return []
+        # �?가지 ?�한 철자/경로 바리?�이??        cands = {
+            base,
+            base.replace("effects/hairstyle-editor-pro", "portrait/hairstyle-editor-pro"),
+            base.replace("effects/hairstyle-changer-pro", "portrait/hairstyle-editor-pro"),
+            base.replace("hairstyle-editor-pro", "hairstyle_changer_pro"),
+            base.replace("hairstyle_changer_pro", "hairstyle-changer-pro"),
+        }
+        # ?�렬 고정
+        return sorted({u.rstrip("/") for u in cands if u})
+        
+settings = Settings()

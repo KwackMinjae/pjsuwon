@@ -1,0 +1,40 @@
+from pydantic_settings import BaseSettings
+from pydantic import Field
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent  # .../hairfusion-service/app -> /hairfusion-service
+
+class Settings(BaseSettings):
+    # 단일 기본 URL
+    ailab_base_url: str = Field(
+        default="https://www.ailabapi.com/api/portrait/effects/hairstyle-changer-pro",
+        alias="AILAB_BASE_URL"
+    )
+    # API 키
+    ailab_api_key: str = Field(default="", alias="AILAB_API_KEY")
+
+    # 요청 타임아웃
+    request_timeout: int = Field(default=180, alias="REQUEST_TIMEOUT")
+
+    class Config:
+        env_file = str(ROOT / ".env")
+        extra = "ignore"
+
+    @property
+    def effective_ailab_urls(self) -> list[str]:
+        """기본 URL을 바리에이션과 함께 후보군으로 확장"""
+        base = (self.ailab_base_url or "").rstrip("/")
+        if not base:
+            return []
+        # 몇 가지 흔한 철자/경로 바리에이션
+        cands = {
+            base,
+            base.replace("effects/hairstyle-editor-pro", "portrait/hairstyle-editor-pro"),
+            base.replace("effects/hairstyle-changer-pro", "portrait/hairstyle-editor-pro"),
+            base.replace("hairstyle-editor-pro", "hairstyle_changer_pro"),
+            base.replace("hairstyle_changer_pro", "hairstyle-changer-pro"),
+        }
+        # 정렬 고정
+        return sorted({u.rstrip("/") for u in cands if u})
+        
+settings = Settings()

@@ -1,0 +1,18 @@
+﻿from functools import lru_cache
+from pydantic_settings import BaseSettings
+from pydantic import Field
+
+class Settings(BaseSettings):
+    # 8000 → 8100 프록시 목적지 (환경변수 HAIRFUSION_BASE_URL 로도 주입 가능)
+    hairfusion_base_url: str = Field(default="http://127.0.0.1:8100", alias="HAIRFUSION_BASE_URL")
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"   # 정의 안 된 환경변수는 무시
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+# 편의용 인스턴스
+settings = get_settings()
